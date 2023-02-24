@@ -1,0 +1,353 @@
+{smcl}
+{com}{sf}{ul off}{txt}{.-}
+      name:  {res}<unnamed>
+       {txt}log:  {res}/Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter/log/23 Feb 2023.smcl
+  {txt}log type:  {res}smcl
+ {txt}opened on:  {res}23 Feb 2023, 22:25:15
+{txt}
+{com}. 
+. ***************************************************************************
+. ** DO-FILE WORKFLOW *******************************************************
+. ***************************************************************************
+. 
+. **PART 1. Dataset preparation
+. 
+.         ** Generate dataset
+.         do "script/gen_data.do"
+{txt}
+{com}. /*
+> Name: Generate new dataset from random distribution 
+> Date Created: 02/23/2023
+> Date Last Modified: 02/23/2023
+> Created by: EKY
+> Modified By: EKY
+> Last modified by: EKY
+> Uses data:
+> Creates data: 
+> Description:
+> */
+. 
+. ***************************************************************************
+. ** SYSTEM SETUP ***********************************************************
+. ***************************************************************************
+. 
+. cls
+{txt}
+{com}. clear
+{txt}
+{com}. set more off
+{txt}
+{com}. * set memory // not applicable for version > 12.0
+. 
+. 
+. version 16.1
+{txt}
+{com}. 
+. 
+. * Set directory [to replicate, CHANGE THIS DIRECTORY]
+. cd /Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{res}/Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{txt}
+{com}. 
+. * Check directory
+. pwd
+{res}/Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{txt}
+{com}. 
+. * Set seed
+. set seed 02232023
+{txt}
+{com}. 
+. ***************************************************************************
+. ** CREATE DATASET *********************************************************
+. ***************************************************************************
+. 
+. * Panel dataset
+.         
+.         * Set observations
+.         set obs 10000
+{txt}{p}
+number of observations (_N)  was 0,
+now 10,000
+{p_end}
+
+{com}. 
+.         * Generate id
+.         egen id = seq(), f(1) t(100)
+{txt}
+{com}.         
+.         * Generate yr
+.         gen yr = int((_n-1)/100) +1
+{txt}
+{com}.         replace yr = 1900 + yr
+{txt}(10,000 real changes made)
+
+{com}.         
+.         * Generate gang
+.         egen gang = seq(), f(1) t(4) b(4)
+{txt}
+{com}.         
+.         * Generate depvar by gamma distributions
+.         gen depvar = (rgamma(30,90)+50)/100
+{txt}
+{com}. 
+.         * Generate indepvar and covariates
+.         gen indep = rbeta(20,75)
+{txt}
+{com}.         gen cov1 = rbinomial(1000, 0.3)
+{txt}
+{com}.         gen cov2 = runiform(0,77)
+{txt}
+{com}.         gen cov3 = runiform(-3, 10) + 5
+{txt}
+{com}.         gen cov4 = runiform(0,1)
+{txt}
+{com}.         replace cov4 = cov4 < .5
+{txt}(10,000 real changes made)
+
+{com}. 
+. ***************************************************************************
+. ** DATA CLEANING & MODIFICATION *******************************************
+. ***************************************************************************
+. 
+. * LABELLING
+.         * Labelling indepvar and depvar
+.         lab var depvar "Dependent Variable"
+{txt}
+{com}.         lab var indep "Independent Variable"
+{txt}
+{com}. 
+.         * Covariates
+.         foreach i of num 1/4{c -(}
+{txt}  2{com}.                 lab var cov`i' "Covariates `i'"
+{txt}  3{com}.         {c )-}
+{txt}
+{com}.         
+.         lab var gang "Coalition"
+{txt}
+{com}.         
+.         * Identifier
+.         lab var id "ID obs"
+{txt}
+{com}.         lab var yr "Year"
+{txt}
+{com}. 
+.         * Labelling dataset
+.         lab data "Demo dataset"
+{txt}
+{com}. 
+. * REORDERING
+. order id yr depvar indep cov1 cov2 cov3 cov4
+{txt}
+{com}. sort id yr
+{txt}
+{com}. ***************************************************************************
+. ***************************************************************************
+. 
+. * SAVING DATASET
+. compress
+  {txt}variable {bf}yr{sf} was {bf}{res}float{sf}{txt} now {bf}{res}int{sf}
+  {txt}variable {bf}cov1{sf} was {bf}{res}float{sf}{txt} now {bf}{res}int{sf}
+  {txt}variable {bf}cov4{sf} was {bf}{res}float{sf}{txt} now {bf}{res}byte{sf}
+{txt}  (70,000 bytes saved)
+
+{com}. save "data_raw/demo_dataset.dta", replace
+{txt}file data_raw/demo_dataset.dta saved
+
+{com}. 
+{txt}end of do-file
+
+{com}.         
+.         ** Merging dataset
+.         do "script/reshape.do"
+{txt}
+{com}. /*
+> Name: Reshape Do
+> Date Created: 02/23/2023
+> Date Last Modified: 02/23/2023
+> Created by: EKY
+> Modified By: EKY
+> Last modified by: EKY
+> Uses data:
+> Creates data: 
+> Description:
+> */
+. 
+. ***************************************************************************
+. ** SYSTEM SETUP ***********************************************************
+. ***************************************************************************
+. 
+. cls
+{txt}
+{com}. clear
+{txt}
+{com}. set more off
+{txt}
+{com}. * set memory // not applicable for version > 12.0
+. 
+. 
+. version 16.1
+{txt}
+{com}. 
+. 
+. * Set directory [to replicate, CHANGE THIS DIRECTORY]
+. cd /Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{res}/Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{txt}
+{com}. 
+. * Check directory
+. pwd
+{res}/Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{txt}
+{com}. 
+. ***************************************************************************
+. ** RESHAPING DATA *********************************************************
+. ***************************************************************************
+. 
+. * Importing dataset
+. use "data_raw/demo_dataset.dta", clear
+{txt}(Demo dataset)
+
+{com}. 
+. * Set panel
+. xtset id yr
+{res}{txt}{col 8}panel variable:  {res}id (strongly balanced)
+{txt}{col 9}time variable:  {res}{col 25}yr, 1901 to 2000
+{txt}{col 17}delta:  {res}1 unit
+{txt}
+{com}. 
+. * Preserve and drop
+. preserve
+{txt}
+{com}. drop cov* gang // make sure to include all variables, so I drop it for a while
+{txt}
+{com}. 
+. 
+. * Reshape from long to wide
+. reshape wide depvar indep, i(id) j(yr)
+{txt}(note: j = 1901 1902 1903 1904 1905 1906 1907 1908 1909 1910 1911 1912 1913 1914 1915 1916 1917 1918 1919 1920 1921 1922 1923 1924 1925 1926 1927 1928 1929 1930 1931 1932 1933 1934 1935 1936 1937 1938 1939 1940 1941 1942 1943 1944 1945 1946 1947 1948 1949 1950 1951 1952 1953 1954 1955 1956 1957 1958 1959 1960 1961 1962 1963 1964 1965 1966 1967 1968 1969 1970 1971 1972 1973 1974 1975 1976 1977 1978 1979 1980 1981 1982 1983 1984 1985 1986 1987 1988 1989 1990 1991 1992 1993 1994 1995 1996 1997 1998 1999 2000)
+
+Data{col 36}long{col 43}->{col 48}wide
+{hline 77}
+Number of obs.                 {res}   10000   {txt}->{res}     100
+{txt}Number of variables            {res}       4   {txt}->{res}     201
+{txt}j variable (100 values)              {res}yr   {txt}->   (dropped)
+xij variables:
+                                 {res}depvar   {txt}->   {res}depvar1901 depvar1902 ... depvar2000
+                                  indep   {txt}->   {res}indep1901 indep1902 ... indep2000
+{txt}{hline 77}
+
+{com}. 
+. * Reshape from long to wide
+. reshape long depvar indep, i(id) j(year)
+{txt}(note: j = 1901 1902 1903 1904 1905 1906 1907 1908 1909 1910 1911 1912 1913 1914 1915 1916 1917 1918 1919 1920 1921 1922 1923 1924 1925 1926 1927 1928 1929 1930 1931 1932 1933 1934 1935 1936 1937 1938 1939 1940 1941 1942 1943 1944 1945 1946 1947 1948 1949 1950 1951 1952 1953 1954 1955 1956 1957 1958 1959 1960 1961 1962 1963 1964 1965 1966 1967 1968 1969 1970 1971 1972 1973 1974 1975 1976 1977 1978 1979 1980 1981 1982 1983 1984 1985 1986 1987 1988 1989 1990 1991 1992 1993 1994 1995 1996 1997 1998 1999 2000)
+
+Data{col 36}wide{col 43}->{col 48}long
+{hline 77}
+Number of obs.                 {res}     100   {txt}->{res}   10000
+{txt}Number of variables            {res}     201   {txt}->{res}       4
+{txt}j variable (100 values)                   ->   {res}year
+{txt}xij variables:
+   {res}depvar1901 depvar1902 ... depvar2000   {txt}->   {res}depvar
+      indep1901 indep1902 ... indep2000   {txt}->   {res}indep
+{txt}{hline 77}
+
+{com}. 
+. * Restoring dataset
+. restore
+{txt}
+{com}. 
+. ***************************************************************************
+. ***************************************************************************
+. 
+. * SAVING DATASET
+. compress
+{txt}  (0 bytes saved)
+
+{com}. save "data_cleaned/demo_cleaned.dta", replace
+{txt}file data_cleaned/demo_cleaned.dta saved
+
+{com}. 
+{txt}end of do-file
+
+{com}.         
+. //      * Cleaning part (a)
+. //      do "script/clean_1.do"
+.         
+. //      * Cleaning part (b)
+. //      do "script/clean_2.do"
+. 
+. 
+. **PART 2. Analysis
+. 
+.         ** Descriptive analysis and EDA
+.         do "script/EDA.do"
+{txt}
+{com}. /*
+> Name: Analysis 1
+> Date Created: 02/23/2023
+> Date Last Modified: 02/23/2023
+> Created by: EKY
+> Modified By: EKY
+> Last modified by: EKY
+> Uses data:
+> Creates data: 
+> Description:
+> */
+. 
+. ***************************************************************************
+. ** SYSTEM SETUP ***********************************************************
+. ***************************************************************************
+. 
+. cls
+{txt}
+{com}. clear
+{txt}
+{com}. set more off
+{txt}
+{com}. * set memory // not applicable for version > 12.0
+. 
+. 
+. version 16.1
+{txt}
+{com}. 
+. 
+. * Set directory [to replicate, CHANGE THIS DIRECTORY]
+. cd /Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{res}/Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{txt}
+{com}. 
+. * Check directory
+. pwd
+{res}/Users/egayazid/QMSS/SPRING23/coding_test/stata-cookiecutter
+{txt}
+{com}. 
+. ***************************************************************************
+. ** EDA ********************************************************************
+. ***************************************************************************
+. 
+. * Importing dataset
+. use "data_cleaned/demo_cleaned.dta", clear
+{txt}(Demo dataset)
+
+{com}. 
+{txt}end of do-file
+
+{com}.         
+.         ** Inference analysis
+. //      do "script/analysis_2.do"
+. 
+. **PART 3. Reporting
+. 
+.         ** Table reporting
+. //      do "script/report_1.do"
+.         
+.         ** Plot visualization
+. //      do "script/report_2.do"
+. 
+. ***************************************************************************
+. 
+. * End log session
+. capture log close
+{smcl}
+{com}{sf}{ul off}
