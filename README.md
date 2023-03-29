@@ -1,6 +1,6 @@
 # stata-cookiecutter
 
-A template or cookiecutter for a scientific research project using STATA.
+A template or cookiecutter for a scientific research project using STATA. Please freely use this template for your STATA project. Further do-files are under development.
 
 Version 0.0.1
 
